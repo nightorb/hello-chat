@@ -1,41 +1,132 @@
 import React from 'react';
-import { View, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Platform, KeyboardAvoidingView, LogBox } from 'react-native';
 
 // import the Gifted Chat library
 import { Bubble, Day, GiftedChat, SystemMessage } from 'react-native-gifted-chat';
 
+// import firebase which is needed to establish a connection to Firestore database
+import * as firebase from 'firebase';
+import 'firebase/firestore';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAJ6Tb0EjKvR9GQUhyQMyGN6F6AY9XP5Zs",
+  authDomain: "nightorbs-hellochat.firebaseapp.com",
+  projectId: "nightorbs-hellochat",
+  storageBucket: "nightorbs-hellochat.appspot.com",
+  messagingSenderId: "300935556436",
+  appId: "1:300935556436:web:21482ff0bd5b6af3a1ecc1"
+};
+
 export default class Chat extends React.Component {
   constructor() {
     super();
-    // initialize state with an empty array in messages
     this.state = {
-      messages: []
+      messages: [],
+      uid: 0,
+      user: {
+        _id: '',
+        name: '',
+        avatar: ''
+      }
     };
+
+    // initialize firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    // create a reference to the "messages" collection
+    this.referenceChatMessages = firebase.firestore().collection('messages');
+    this.refMsgsUser = null;
+
+    // to remove warning messages in the console
+    LogBox.ignoreLogs([
+      'Setting a timer',
+      'Warning: ...',
+      'undefined',
+      'Animated.event now requires a second argument for options'
+    ]);
   }
 
   componentDidMount() {
     let { name } = this.props.route.params;
 
-    this.setState({
-      // messages must follow a certain format to work with Gifted Chat
-      messages: [
-        {
-          _id: 1,
-          text: 'Hello?',
-          createdAt: new Date(),
-          user: {
-            _id: 2,
-            name: 'React Native',
-            avatar: 'https://placeimg.com/140/140/any'
-          }
-        },
-        {
-          _id: 2,
-          text: `${name} has entered the chat`,
-          createdAt: new Date(),
-          system: true
+    // listen to authentication events
+    this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+      // when no user is signed in, create new user by signing in anonymously (a temporary account)
+      if (!user) {
+        await firebase.auth().signInAnonymously();
+      }
+
+      // update user state with currently active user data
+      this.setState({
+        uid: user.uid,
+        messages: [],
+        user: {
+          _id: user.uid,
+          name: name,
+          avatar: 'https://placeimg.com/140/140/any'
         }
-      ]
+      });
+
+      // listens for updates in the collection
+      this.unsubscribe = this.referenceChatMessages
+        .orderBy('createdAt', 'desc')
+        .onSnapshot(this.onCollectionUpdate);
+    });
+
+    // this.setState({
+    //   messages: [
+    //     {
+    //       _id: 2,
+    //       text: `${name} has entered the chat`,
+    //       createdAt: new Date(),
+    //       system: true
+    //     }
+    //   ]
+    // });
+  }
+
+  componentWillUnmount() {
+    // stop listening to authentication
+    this.authUnsubscribe();
+    // stop listening for changes
+    this.unsubscribe();
+  }
+
+  onCollectionUpdate = (querySnapshot) => {
+    const messages = [];
+    // go through each document
+    querySnapshot.forEach((doc) => {
+      // get the queryDocumentSnapshot's data
+      var data = doc.data();
+      // each field within each doc is saved into the messages object
+      messages.push({
+        _id: data._id,
+        text: data.text,
+        createdAt: data.createdAt.toDate(),
+        user: {
+          _id: data.user._id,
+          name: data.user.name,
+          avatar: data.user.avatar
+        }
+      });
+    });
+    // renders messages object in the app
+    this.setState({
+      messages: messages
+    });
+  }
+
+  addMessage() {
+    const message = this.state.messages[0];
+    // add a new message to the collection
+    this.referenceChatMessages.add({
+      _id: message._id,
+      text: message.text || '',
+      createdAt: message.createdAt,
+      user: this.state.user
     });
   }
 
@@ -45,7 +136,9 @@ export default class Chat extends React.Component {
     this.setState(previousState => ({
       // the message a user has sent gets appended to the state messages so that it can be displayed in the chat
       messages: GiftedChat.append(previousState.messages, messages)
-    }));
+    }), () => {
+      this.addMessage();
+    });
   }
 
   // function for changing speech bubble color
@@ -88,6 +181,7 @@ export default class Chat extends React.Component {
 
   render() {
     const { bgColor } = this.props.route.params;
+    const { user } = this.state;
 
     return (
       <View style={{ flex: 1, backgroundColor: bgColor ? bgColor : '#fff' }}>
@@ -97,7 +191,11 @@ export default class Chat extends React.Component {
           renderDay={this.renderDay.bind(this)}
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
-          user={{ _id: 1 }}
+          user={{
+            _id: user._id,
+            name: user.name,
+            avatar: user.avatar
+          }}
         />
         { Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
       </View>

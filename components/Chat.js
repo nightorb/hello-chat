@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Platform, KeyboardAvoidingView, LogBox } from 'react-native';
 
 // import the Gifted Chat library
-import { Bubble, Day, GiftedChat, InputToolbar, SystemMessage } from 'react-native-gifted-chat';
+import { Bubble, Day, GiftedChat, InputToolbar, SystemMessage, Actions } from 'react-native-gifted-chat';
+
+import CustomActions from './CustomActions';
 
 // import firebase which is needed to establish a connection to Firestore database
 import * as firebase from 'firebase';
@@ -263,6 +265,10 @@ export default class Chat extends React.Component {
     );
   }
 
+  renderCustomActions(props) {
+    return <CustomActions {...props} />;
+  }
+
   render() {
     const { bgColor } = this.props.route.params;
     const { user } = this.state;
@@ -274,6 +280,7 @@ export default class Chat extends React.Component {
           renderInputToolbar={this.renderInputToolbar.bind(this)}
           renderSystemMessage={this.renderSystemMessage.bind(this)}
           renderDay={this.renderDay.bind(this)}
+          renderActions={this.renderCustomActions}
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
           user={{

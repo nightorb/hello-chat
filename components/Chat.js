@@ -29,7 +29,7 @@ export default class Chat extends React.Component {
     super();
     this.state = {
       messages: [],
-      uid: 0,
+      uid: null,
       user: {
         _id: '',
         name: '',
@@ -67,6 +67,15 @@ export default class Chat extends React.Component {
     }
   }
 
+  // saves user to asyncStorage: necessary to display message bubbles on the correct side while offline
+  async saveUser() {
+    try {
+      await AsyncStorage.setItem('user', JSON.stringify(this.state.user));
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
   // get messages from asyncStorage
   async getMessages() {
     let messages = '';
@@ -79,6 +88,19 @@ export default class Chat extends React.Component {
       });
     } catch (err) {
       console.log(err);
+    }
+  }
+
+  // get user from AsyncStorage
+  async getUser() {
+    let user = '';
+    try {
+      user = await AsyncStorage.getItem('user') || [];
+      this.setState({
+        user: JSON.parse(user)
+      });
+    } catch (err) {
+      console.log(err.message);
     }
   }
 
@@ -132,14 +154,17 @@ export default class Chat extends React.Component {
 
         // save messages when online
         this.saveMessages();
+        this.saveUser();
 
         console.log('online');
       } else {
         this.setState({
           isConnected: false
-        });
+        });     
         // loads messages from asyncStorage
         this.getMessages();
+        this.getUser();
+
         console.log('offline');
       }
     });
@@ -201,6 +226,7 @@ export default class Chat extends React.Component {
       messages: messages
     });
     this.saveMessages();
+    this.saveUser();
   }
 
   // function for when user sends a message
@@ -212,6 +238,7 @@ export default class Chat extends React.Component {
     }), () => {
       this.addMessage();
       this.saveMessages();
+      this.saveUser();
     });
   }
 

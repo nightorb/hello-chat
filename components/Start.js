@@ -22,10 +22,10 @@ export default class Start extends React.Component {
 
   // colors to choose from
   colors = {
-    black: '#090C08',
-    purple: '#474056',
-    blue: '#8a95a5',
-    green: '#b9c6ae'
+    black: '#202426',
+    green: '#25474d',
+    blue: '#bdcbdb',
+    pink: '#cbb6d1'
   }
 
   render() {
@@ -64,9 +64,9 @@ export default class Start extends React.Component {
                   accessibilityHint="Adds a black background color to the chat screen."
                 />
                 <TouchableOpacity
-                  style={[styles.bgColors, styles.bgPurple]}
+                  style={[styles.bgColors, styles.bgGreen]}
                   activeOpacity={0.8}
-                  onPress={() => this.changeBgColor(this.colors.purple)}
+                  onPress={() => this.changeBgColor(this.colors.green)}
                   accessible={true}
                   accessibilityRole="button"
                   accessibilityLabel="purple background color"
@@ -82,9 +82,9 @@ export default class Start extends React.Component {
                   accessibilityHint="Adds a blue background color to the chat screen."
                 />
                 <TouchableOpacity
-                  style={[styles.bgColors, styles.bgGreen]}
+                  style={[styles.bgColors, styles.bgPink]}
                   activeOpacity={0.8}
-                  onPress={() => this.changeBgColor(this.colors.green)}
+                  onPress={() => this.changeBgColor(this.colors.pink)}
                   accessible={true}
                   accessibilityRole="button"
                   accessibilityLabel="green background color"
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: '600',
-    color: '#fff',
+    color: '#ededed',
     marginTop: 50
   },
   box: {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     height: 260,
     minHeight: 260,
     maxHeight: 300,
-    backgroundColor: '#fff',
+    backgroundColor: '#ededed',
     borderRadius: 3,
     flexGrow: 1,
     flexShrink: 0,
@@ -146,14 +146,14 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#757083'
+    color: '#3e6d8a'
   },
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '88%',
     opacity: 0.5,
-    borderColor: '#757083',
+    borderColor: '#3e6d8a',
     borderWidth: 2,
     borderRadius: 3,
     padding: 10,
@@ -185,20 +185,20 @@ const styles = StyleSheet.create({
     borderRadius: 25
   },
   bgBlack: {
-    backgroundColor: '#090C08'
-  },
-  bgPurple: {
-    backgroundColor: '#474056'
-  },
-  bgBlue: {
-    backgroundColor: '#8a95a5'
+    backgroundColor: '#202426'
   },
   bgGreen: {
-    backgroundColor: '#b9c6ae'
+    backgroundColor: '#25474d'
+  },
+  bgBlue: {
+    backgroundColor: '#bdcbdb'
+  },
+  bgPink: {
+    backgroundColor: '#cbb6d1'
   },
   button: {
     width: '88%',
-    backgroundColor: '#757083',
+    backgroundColor: '#3e6d8a',
     borderRadius: 3,
     padding: 15,
     marginVertical: 15
@@ -207,6 +207,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    color: '#fff'
+    color: '#ededed'
   }
 });

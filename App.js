@@ -25,7 +25,15 @@ export default class App extends Component {
   render() {
     return (
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Start">
+        <Stack.Navigator
+          initialRouteName="Start"
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#3E6D8A'
+            },
+            headerTintColor: '#ededed'
+          }}
+        >
           <Stack.Screen
             name="Start"
             component={Start}

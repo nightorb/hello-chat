@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Platform, KeyboardAvoidingView, LogBox } from 'react-native';
+import MapView from 'react-native-maps';
 
 // import the Gifted Chat library
 import { Bubble, Day, GiftedChat, InputToolbar, SystemMessage, Actions } from 'react-native-gifted-chat';
@@ -26,6 +27,8 @@ const firebaseConfig = {
   appId: "1:300935556436:web:21482ff0bd5b6af3a1ecc1"
 };
 
+LogBox.ignoreAllLogs();
+
 export default class Chat extends React.Component {
   constructor() {
     super();
@@ -37,6 +40,8 @@ export default class Chat extends React.Component {
         name: '',
         avatar: ''
       },
+      image: null,
+      location: null,
       isConnected: false
     };
 
@@ -48,15 +53,6 @@ export default class Chat extends React.Component {
     // create a reference to the "messages" collection
     this.referenceChatMessages = firebase.firestore().collection('messages');
     this.refMsgsUser = null;
-
-    // to remove warning messages in the console
-    LogBox.ignoreLogs([
-      'Setting a timer',
-      'Warning: ...',
-      'undefined',
-      'Animated.event now requires a second argument for options',
-      'AsyncStorage'
-    ]);
   }
 
   // save messages to asyncStorage
@@ -140,13 +136,19 @@ export default class Chat extends React.Component {
           // update user state with currently active user data
           this.setState({
             uid: user.uid,
-            messages: [],
+            messages: [],         
             user: {
               _id: user.uid,
               name: name,
               avatar: 'https://placeimg.com/140/140/any'
             }
           });
+
+          // access stored messages of current user
+          this.refMsgsUser = firebase
+            .firestore()
+            .collection('messages')
+            .where('uid', '==', this.state.uid);
 
           // listens for updates in the collection
           this.unsubscribe = this.referenceChatMessages
@@ -157,8 +159,6 @@ export default class Chat extends React.Component {
         // save messages when online
         this.saveMessages();
         this.saveUser();
-
-        console.log('online');
       } else {
         this.setState({
           isConnected: false
@@ -166,22 +166,8 @@ export default class Chat extends React.Component {
         // loads messages from asyncStorage
         this.getMessages();
         this.getUser();
-
-        console.log('offline');
       }
     });
-
-
-    // this.setState({
-    //   messages: [
-    //     {
-    //       _id: 2,
-    //       text: `${name} has entered the chat`,
-    //       createdAt: new Date(),
-    //       system: true
-    //     }
-    //   ]
-    // });
   }
 
   componentWillUnmount() {
@@ -201,10 +187,13 @@ export default class Chat extends React.Component {
       _id: message._id,
       text: message.text || '',
       createdAt: message.createdAt,
-      user: this.state.user
+      user: this.state.user,
+      image: message.image || null,
+      location: message.location || null
     });
   }
 
+  // takes snapshot on collection update
   onCollectionUpdate = (querySnapshot) => {
     const messages = [];
     // go through each document
@@ -214,13 +203,15 @@ export default class Chat extends React.Component {
       // each field within each doc is saved into the messages object
       messages.push({
         _id: data._id,
-        text: data.text,
+        text: data.text || '',
         createdAt: data.createdAt.toDate(),
         user: {
           _id: data.user._id,
           name: data.user.name,
           avatar: data.user.avatar
-        }
+        },
+        image: data.image || null,
+        location: data.location || null
       });
     });
     // renders messages object in the app
@@ -251,7 +242,10 @@ export default class Chat extends React.Component {
         {...props}
         wrapperStyle={{
           right: {
-            backgroundColor: '#8F3A79'
+            backgroundColor: '#60a9d6'
+          },
+          left: {
+            backgroundColor: '#ededed'
           }
         }}
       />
@@ -263,21 +257,14 @@ export default class Chat extends React.Component {
     if (this.state.isConnected == false) {
     } else {
       return (
-        <InputToolbar {...props} />
+        <InputToolbar 
+          {...props}
+          containerStyle={{
+            backgroundColor: '#ededed'
+          }}
+        />
       );
     }
-  }
-
-  // change color of system message
-  renderSystemMessage(props) {
-    return (
-      <SystemMessage
-        {...props}
-        textStyle={{
-          color: '#fff'
-        }}
-      />
-    );
   }
 
   // change color of date text
@@ -286,7 +273,7 @@ export default class Chat extends React.Component {
       <Day
         {...props}
         textStyle={{
-          color: '#fff'
+          color: '#ededed'
         }}
       />
     );
@@ -296,6 +283,27 @@ export default class Chat extends React.Component {
     return <CustomActions {...props} />;
   }
 
+  renderCustomView(props) {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{width: 150,
+            height: 100,
+            borderRadius: 13,
+            margin: 3}}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421
+          }}
+        />
+      );
+    }
+    return null;
+  }
+
   render() {
     const { bgColor } = this.props.route.params;
     const { user } = this.state;
@@ -303,11 +311,11 @@ export default class Chat extends React.Component {
     return (
       <View style={{ flex: 1, backgroundColor: bgColor ? bgColor : '#fff' }}>
         <GiftedChat
-          renderBubble={this.renderBubble.bind(this)}
+          renderBubble={this.renderBubble}
           renderInputToolbar={this.renderInputToolbar.bind(this)}
-          renderSystemMessage={this.renderSystemMessage.bind(this)}
-          renderDay={this.renderDay.bind(this)}
+          renderDay={this.renderDay}
           renderActions={this.renderCustomActions}
+          renderCustomView={this.renderCustomView}
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
           user={{

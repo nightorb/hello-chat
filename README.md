@@ -3,6 +3,15 @@
 ## Overview
 "HelloChat" is a chat app for mobile devices created with React Native. The app provides users with a chat interface and options to share images and their location.
 
+<div align="center">
+  <img src="https://user-images.githubusercontent.com/89855337/163040788-e251c0e1-aa0c-4f67-804a-56d48d236c66.png"
+       alt="screenshot of HelloChat app start screen"
+       width="25%">
+  <img src="https://user-images.githubusercontent.com/89855337/163040795-79f437f3-98e2-4ffe-8864-a061a686657c.png"
+       alt="screenshot of HelloChat app chat screen"
+       width="25%">
+</div>
+
 ## Key Features
 - A page where users can enter their name and choose a background color for the chat screen before joining the chat.
 - A page displaying the conversation, as well as an input field and submit button.
